@@ -1,0 +1,15 @@
+┌──(ashraful㉿kali)-[~]
+└─$ while true; do
+  # Fetch Nginx stub status
+  active_connections=$(docker exec -it c367dc curl -s http://localhost/nginx_status | grep "Active connections" | awk '{print $3}')
+  reading=$(docker exec -it c367dc curl -s http://localhost/nginx_status | grep "Reading" | awk '{print $2}')
+  writing=$(docker exec -it c367dc curl -s http://localhost/nginx_status | grep "Writing" | awk '{print $4}')
+
+  # Active Requests Per Second calculation (basic approach)
+  rps=$((reading + writing))
+
+  echo "Active RPS: $rps"
+
+  sleep 1  # Refresh every second
+done
+
