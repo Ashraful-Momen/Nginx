@@ -1,17 +1,33 @@
 ┌──(ashraful㉿kali)-[~]
-└─$ while true; do
-  # Fetch Nginx stub status
-  active_connections=$(docker exec -it c367dc curl -s http://localhost/nginx_status | grep "Active connections" | awk '{print $3}')
-  reading=$(docker exec -it c367dc curl -s http://localhost/nginx_status | grep "Reading" | awk '{print $2}')
-  writing=$(docker exec -it c367dc curl -s http://localhost/nginx_status | grep "Writing" | awk '{print $4}')
+└─$ #!/bin/bash
 
-  # Active Requests Per Second calculation (basic approach)
-  rps=$((reading + writing))
+# Variables to track requests between intervals
+previous_requests=0
+first_run=true
 
-  echo "Active RPS: $rps"
-
-  sleep 1  # Refresh every second
+while true; do
+  # Get the stats including total requests count
+  stats=$(docker exec -it 79848d26b9ce curl -s http://localhost/nginx_status)
+  
+  # Extract total requests number (third number on the server line)
+  total_requests=$(echo "$stats" | grep -o "server accepts handled requests" -A1 | 
+                  tail -1 | awk '{print $3}')
+  
+  # First run just captures the baseline
+  if [ "$first_run" = true ]; then
+    previous_requests=$total_requests
+    first_run=false
+    echo "Starting monitoring..."
+  else
+    # Calculate actual RPS
+    rps=$((total_requests - previous_requests))
+    echo "$(date +"%H:%M:%S") | Actual RPS: $rps | Active connections: $(echo "$stats" | grep "Active" | awk '{print $3}')"
+    previous_requests=$total_requests
+  fi
+  
+  sleep 1
 done
+
 
 
 ========================================== another command for showing the active RPS form the Nginx ===========================================
