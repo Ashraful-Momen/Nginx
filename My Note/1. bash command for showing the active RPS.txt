@@ -28,6 +28,34 @@ while true; do
   sleep 1
 done
 
+============================================= show the active rps from nginx : short the upper command =================================================
+Here’s a more concise version of your script that achieves the same functionality but is shorter and more streamlined:
+
+```bash
+#!/bin/bash
+
+prev=0
+while true; do
+  stats=$(docker exec -it 79848d26b9ce curl -s http://localhost/nginx_status)
+  total=$(echo "$stats" | awk '/^[0-9]+/{print $3}')
+  
+  if [ $prev -ne 0 ]; then
+    rps=$((total - prev))
+    echo "$(date +"%H:%M:%S") | RPS: $rps | Active: $(echo "$stats" | awk '/Active/{print $3}')"
+  fi
+  
+  prev=$total
+  sleep 1
+done
+```
+
+### Key Improvements:
+1. **Removed unnecessary variables** like `first_run` by initializing `prev=0` and checking if it's non-zero.
+2. **Simplified parsing** of `total_requests` using `awk` directly.
+3. **Reduced redundancy** in extracting active connections.
+
+This version maintains the same functionality while being more compact and easier to read.
+
 
 
 ========================================== another command for showing the active RPS form the Nginx ===========================================
