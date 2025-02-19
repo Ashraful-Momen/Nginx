@@ -37,6 +37,20 @@ root@4c0aa00778f2:/usr/share/nginx/html# ls
 >>> nginx -s reload 
 
 
+# for docker container reload after configuration change : 
+docker exec -it c367dc nginx -t  # Test config (should return successful)
+docker exec -it c367dc nginx -s reload  # Reload Nginx
+
+#check the container log: 
+docker logs -f c367dc  # Show all logs
+
+#for only the access log : 
+docker exec -it c367dc tail -f /var/log/nginx/access.log
+
+#for the error log : 
+docker exec -it c367dc tail -f /var/log/nginx/error.log
+
+
 ========================================================= Main Part From Here =====================================================
 #/etc/nginx/nginx.conf => 
 ----------------------------
@@ -499,3 +513,39 @@ http {
 3. Load balancing across multiple Node.js instances
 4. HTTP to HTTPS redirection for security
 5. Original client information preserved in requests to backends
+
+#============================================= How to get the real rps ======================================
+#Get the active client rps 
+
+server {
+    listen 80;
+    
+    location /nginx_status {
+        stub_status; //this code help to get the real client rps 
+        allow 127.0.0.1;  # Change this to your monitoring server if needed
+        deny all;
+    }
+}
+
+
+#Advance code for get : https / http RPS => 
+---------------------------------------------
+http {
+    # Standard configuration
+    log_format main_ext '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for" '
+                        'rt=$request_time uct="$upstream_connect_time" '
+                        'uht="$upstream_header_time" urt="$upstream_response_time"';
+    
+    # Enable stub_status module
+    server {
+        listen 8080;
+        location /nginx_status {
+            stub_status on;
+            access_log off;
+            allow 127.0.0.1;
+            deny all;
+        }
+    }
+}
