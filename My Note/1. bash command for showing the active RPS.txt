@@ -59,9 +59,33 @@ This version maintains the same functionality while being more compact and easie
 
 
 ========================================== another command for showing the active RPS form the Nginx ===========================================
-#inside the docker nginx ssh => 
-┌──(ashraful㉿kali)-[~]
-└─$ watch -n1 'docker exec 79848d26b9ce bash -c "grep \$(date +\"%d/%b/%Y:%H:%M:%S\" -d \"1 second ago\") /var/log/nginx/access.log | wc -l"'
 
-#from the local pc bash => 
-watch -n 1 'curl -s http://localhost:81/server-status | grep -o "requests/sec: [0-9.]*" | cut -d" " -f2'
+Here’s how you can rewrite your script using `watch`:
+
+```bash
+watch -n 1 'docker exec -it 79848d26b9ce curl -s http://localhost/nginx_status | awk "/^[0-9]+/{total=\$3} /Active/{active=\$3} END {if (prev) printf \"%s | RPS: %d | Active: %d\n\", strftime(\"%H:%M:%S\"), total-prev, active; prev=total}"'
+```
+
+### Explanation:
+- **`watch -n 1`**: Runs the command every 1 second (`-n 1` specifies the interval).
+- **`docker exec -it 79848d26b9ce curl -s http://localhost/nginx_status`**: Fetches the Nginx status from the Docker container.
+- **`awk`**:
+  - `/^[0-9]+/`: Matches the line with numbers (the line containing `accepts`, `handled`, and `requests`), and extracts the third number (`requests`) into the variable `total`.
+  - `/Active/`: Matches the line with "Active connections" and extracts the third field (number of active connections) into the variable `active`.
+  - **`END` block**: 
+    - If `prev` is set (i.e., not the first run), it calculates the RPS by subtracting the previous total from the current total.
+    - Prints the timestamp, RPS, and active connections.
+    - Updates `prev` with the current `total` for the next iteration.
+  
+### Key Points:
+- **RPS Calculation**: The Requests Per Second (RPS) is calculated by subtracting the previous total requests from the current total requests.
+- **Active Connections**: Extracted directly from the "Active connections" line.
+- **Timestamp**: Uses `strftime("%H:%M:%S")` to format the current time.
+
+### Example Output:
+```
+Every 1.0s: docker exec -it 79848d26b9ce curl -s http://localhost/nginx_status | awk ...
+
+14:23:45 | RPS: 12 | Active: 5
+```
+
