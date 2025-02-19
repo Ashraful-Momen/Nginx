@@ -13,3 +13,8 @@
   sleep 1  # Refresh every second
 done
 
+
+========================================== another command for showing the active RPS form the Nginx ===========================================
+┌──(ashraful㉿kali)-[~]
+└─$ watch -n1 'docker exec 79848d26b9ce bash -c "grep \$(date +\"%d/%b/%Y:%H:%M:%S\" -d \"1 second ago\") /var/log/nginx/access.log | wc -l"'
+
