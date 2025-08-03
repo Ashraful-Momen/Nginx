@@ -1,0 +1,650 @@
+#Nginx Instasure: 
+------------------
+
+Nginx Folder Structure: 
+-----------------------
+forge@instasure-dns-vm-05:/etc/nginx$ ls
+conf.d        fastcgi.conf    forge-conf  koi-win     modules-available  nginx.conf       proxy_params  sites-available  snippets  uwsgi_params
+dhparams.pem  fastcgi_params  koi-utf     mime.types  modules-enabled    nginx.conf.save  scgi_params   sites-enabled    ssl       win-utf
+
+------------------------------------------------------
+forge@instasure-dns-vm-05:/etc/nginx$ cat nginx.conf
+user forge;
+worker_processes auto;
+pid /run/nginx.pid;
+error_log /var/log/nginx/error.log;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+        worker_connections 768;
+        multi_accept on;
+}
+
+http {
+
+        ##
+        # Basic Settings
+        ##
+
+        sendfile on;
+        tcp_nopush on;
+        types_hash_max_size 2048;
+        # server_tokens off;
+
+        server_names_hash_bucket_size 128;
+        # server_name_in_redirect off;
+
+        #client_max_body_size 20M;
+
+        # Increase general limits for the application
+        client_max_body_size 100M;
+        client_body_timeout 300s;
+        client_header_timeout 300s;
+        send_timeout 300s;
+    
+        # Increase buffer sizes
+        client_body_buffer_size 128k;
+        client_header_buffer_size 64k;
+        large_client_header_buffers 4 64k;
+
+
+
+
+
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        ##
+        # SSL Settings
+        ##
+
+        ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3; # Dropping SSLv3, ref: POODLE
+        ssl_prefer_server_ciphers on;
+
+        ##
+        # Logging Settings
+        ##
+
+        access_log /var/log/nginx/access.log;
+
+        ##
+        # Gzip Settings
+        ##
+
+        gzip on;
+
+        # gzip_vary on;
+        # gzip_proxied any;
+        # gzip_comp_level 6;
+        # gzip_buffers 16 8k;
+        # gzip_http_version 1.1;
+        # gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+        ##
+        # Virtual Host Configs
+        ##
+
+        include /etc/nginx/conf.d/*.conf;
+        include /etc/nginx/sites-enabled/*;
+}
+
+
+#mail {
+#       # See sample authentication script at:
+#       # http://wiki.nginx.org/ImapAuthenticateWithApachePhpScript
+#
+#       # auth_http localhost/auth.php;
+#       # pop3_capabilities "TOP" "USER";
+#       # imap_capabilities "IMAP4rev1" "UIDPLUS";
+#
+#       server {
+#               listen     localhost:110;
+#               protocol   pop3;
+#               proxy      on;
+#       }
+#
+#       server {
+#               listen     localhost:143;
+#               protocol   imap;
+#               proxy      on;
+#       }
+#}
+
+================================================================================
+forge@instasure-dns-vm-05:/etc/nginx$ ls
+conf.d        fastcgi.conf    forge-conf  koi-win     modules-available  nginx.conf       proxy_params  sites-available  snippets  uwsgi_params
+dhparams.pem  fastcgi_params  koi-utf     mime.types  modules-enabled    nginx.conf.save  scgi_params   sites-enabled    ssl       win-utf
+forge@instasure-dns-vm-05:/etc/nginx$ cd sites-available/
+forge@instasure-dns-vm-05:/etc/nginx/sites-available$ ls
+bima.ltd.conf   default            dev.instasure.xyz.conf     grp.instasure.xyz.conf  instasure.xyz.conf.bak        test.instasure.xyz.conf
+bima.plus.conf  default.dpkg-dist  devashraful.instasure.xyz  instasure.xyz.conf      microsite.instasure.xyz.conf
+forge@instasure-dns-vm-05:/etc/nginx/sites-available$ 
+================================================================================ Site Availabel ===========================================
+forge@instasure-dns-vm-05:/etc/nginx/sites-available$ cat test.instasure.xyz.conf 
+server {
+    listen 443 ssl;
+    server_name test.instasure.xyz;
+
+    root /nginx/test2025/public;
+    index index.html index.htm index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+
+    # SSL Certificates
+    ssl_certificate /etc/letsencrypt/live/test.instasure.xyz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/test.instasure.xyz/privkey.pem; # managed by Certbot
+}
+
+
+====================================================================================
+forge@instasure-dns-vm-05:/etc/nginx/sites-available$ cat dev.instasure.xyz.conf 
+##
+# You should look at the following URL's in order to grasp a solid understanding
+# of Nginx configuration files in order to fully unleash the power of Nginx.
+# https://www.nginx.com/resources/wiki/start/
+# https://www.nginx.com/resources/wiki/start/topics/tutorials/config_pitfalls/
+# https://wiki.debian.org/Nginx/DirectoryStructure
+#
+# In most cases, administrators will remove this file from sites-enabled/ and
+# leave it as reference inside of sites-available where it will continue to be
+# updated by the nginx packaging team.
+#
+# This file will automatically load configuration files provided by other
+# applications, such as Drupal or Wordpress. These applications will be made
+# available underneath a path with that package name, such as /drupal8.
+#
+# Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
+##
+
+# Default server configuration
+#
+server {
+
+        # SSL configuration
+        #
+        # listen 443 ssl default_server;
+        # listen [::]:443 ssl default_server;
+        #
+        # Note: You should disable gzip for SSL traffic.
+        # See: https://bugs.debian.org/773332
+        #
+        # Read up on ssl_ciphers to ensure a secure configuration.
+        # See: https://bugs.debian.org/765782
+        #
+        # Self signed certs generated by the ssl-cert package
+        # Don't use them in a production server!
+        #
+        # include snippets/snakeoil.conf;
+
+        root /nginx/ashrafulDev/public;
+
+        # Add index.php to the list if you are using PHP
+        index index.html index.htm index.php;
+
+        server_name dev.instasure.xyz; 
+
+        location / {
+                # First attempt to serve request as file, then
+                # as directory, then fall back to displaying a 404.
+                #try_files $uri $uri/ =404;
+                try_files   $uri $uri/ /index.php?$query_string;
+        }
+
+        # pass PHP scripts to FastCGI server
+        #
+        location ~ \.php$ {
+                include snippets/fastcgi-php.conf;
+
+                # With php-fpm (or other unix sockets):
+                fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+                # With php-cgi (or other tcp sockets):
+#               fastcgi_pass 127.0.0.1:9000;
+        }
+
+          location /phpmyadmin {
+                   root /usr/share/;
+                   index index.php index.html index.htm;
+                   location ~ ^/phpmyadmin/(.+\.php)$ {
+                           try_files $uri =404;
+                           root /usr/share/;
+                           #fastcgi_pass 127.0.0.1:9000;
+                           fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+                           fastcgi_index index.php;
+                           fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                           include /etc/nginx/fastcgi_params;
+                   }
+                   location ~* ^/phpmyadmin/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))$ {
+                           root /usr/share/;
+                   }
+            }
+
+        # deny access to .htaccess files, if Apache's document root
+        # concurs with nginx's one
+        #
+        location ~ /\.ht {
+                deny all;
+        }
+
+#    listen [::]:443 ssl ipv6only=on; # managed by Certbot
+#    listen 443 ssl; # managed by Certbot
+#    ssl_certificate /etc/letsencrypt/live/instasure.xyz/fullchain.pem; # managed by Certbot
+#    ssl_certificate_key /etc/letsencrypt/live/instasure.xyz/privkey.pem; # managed by Certbot
+#    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+#    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+
+
+
+#    listen 443 ssl; # managed by Certbot
+#    ssl_certificate /etc/letsencrypt/live/m.instasure.xyz-0001/fullchain.pem; # managed by Certbot
+#    ssl_certificate_key /etc/letsencrypt/live/m.instasure.xyz-0001/privkey.pem; # managed by Certbot
+#    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+#    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+
+
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/dev.instasure.xyz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/dev.instasure.xyz/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+}
+
+
+# Virtual Host configuration for example.com
+#
+# You can move that to a different file under sites-available/ and symlink that
+# to sites-enabled/ to enable it.
+#
+#server {
+#       listen 80;
+#       listen [::]:80;
+#
+#       server_name example.com;
+#
+#       root /var/www/example.com;
+#       index index.html;
+#
+#       location / {
+#               try_files $uri $uri/ =404;
+#       }
+#}
+
+
+server {
+    if ($host = dev.instasure.xyz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+
+        server_name dev.instasure.xyz;
+    listen 80;
+    return 404; # managed by Certbot
+
+
+}forge@instasure-dns-vm-05:/etc/nginx/sites-available$ 
+
+============================================================================
+forge@instasure-dns-vm-05:/etc/nginx/sites-available$ cat instasure.xyz.conf
+# Main HTTPS server block
+server {
+    listen 443 ssl; # Listen for HTTPS
+    server_name instasure.xyz www.instasure.xyz;
+
+    root /nginx/instaweb/public;
+
+    index index.html index.htm index.php;
+
+    # SSL settings
+    ssl_certificate /etc/letsencrypt/live/www.instasure.xyz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/www.instasure.xyz/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+    # Increase client max body size (if needed)
+    client_max_body_size 10M;
+
+    # Main location block
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # PHP handling
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    # phpMyAdmin location block
+    location /phpmyadmin {
+        root /usr/share/;
+        index index.php index.html index.htm;
+        location ~ ^/phpmyadmin/(.+\.php)$ {
+            try_files $uri =404;
+            root /usr/share/;
+            fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            include /etc/nginx/fastcgi_params;
+        }
+        location ~* ^/phpmyadmin/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))$ {
+            root /usr/share/;
+        }
+    }
+
+    # Deny access to .htaccess files
+    location ~ /\.ht {
+        deny all;
+    }
+
+
+
+
+}
+
+# HTTP-to-HTTPS Redirect Block
+server {
+    if ($host = www.instasure.xyz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    if ($host = instasure.xyz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    listen 80;
+    server_name instasure.xyz www.instasure.xyz;
+
+    # Redirect all HTTP requests to HTTPS
+    return 301 https://$host$request_uri;
+
+
+
+
+}
+
+
+=================================================== Site enabled ===========================================
+
+forge@instasure-dns-vm-05:/etc/nginx/sites-enabled$ cat instasure.xyz.conf 
+# Main HTTPS server block
+server {
+    listen 443 ssl; # Listen for HTTPS
+    server_name instasure.xyz www.instasure.xyz;
+
+    root /nginx/instaweb/public;
+
+    index index.html index.htm index.php;
+
+    # SSL settings
+    ssl_certificate /etc/letsencrypt/live/www.instasure.xyz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/www.instasure.xyz/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+    # Increase client max body size (if needed)
+    client_max_body_size 10M;
+
+    # Main location block
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # PHP handling
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    # phpMyAdmin location block
+    location /phpmyadmin {
+        root /usr/share/;
+        index index.php index.html index.htm;
+        location ~ ^/phpmyadmin/(.+\.php)$ {
+            try_files $uri =404;
+            root /usr/share/;
+            fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+            fastcgi_index index.php;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            include /etc/nginx/fastcgi_params;
+        }
+        location ~* ^/phpmyadmin/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))$ {
+            root /usr/share/;
+        }
+    }
+
+    # Deny access to .htaccess files
+    location ~ /\.ht {
+        deny all;
+    }
+
+
+
+
+}
+
+# HTTP-to-HTTPS Redirect Block
+server {
+    if ($host = www.instasure.xyz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    if ($host = instasure.xyz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    listen 80;
+    server_name instasure.xyz www.instasure.xyz;
+
+    # Redirect all HTTP requests to HTTPS
+    return 301 https://$host$request_uri;
+
+
+
+
+}
+
+
+-------------------------------------------------------------------------------------------
+forge@instasure-dns-vm-05:/etc/nginx/sites-enabled$ cat dev.instasure.xyz.conf 
+##
+# You should look at the following URL's in order to grasp a solid understanding
+# of Nginx configuration files in order to fully unleash the power of Nginx.
+# https://www.nginx.com/resources/wiki/start/
+# https://www.nginx.com/resources/wiki/start/topics/tutorials/config_pitfalls/
+# https://wiki.debian.org/Nginx/DirectoryStructure
+#
+# In most cases, administrators will remove this file from sites-enabled/ and
+# leave it as reference inside of sites-available where it will continue to be
+# updated by the nginx packaging team.
+#
+# This file will automatically load configuration files provided by other
+# applications, such as Drupal or Wordpress. These applications will be made
+# available underneath a path with that package name, such as /drupal8.
+#
+# Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
+##
+
+# Default server configuration
+#
+server {
+
+        # SSL configuration
+        #
+        # listen 443 ssl default_server;
+        # listen [::]:443 ssl default_server;
+        #
+        # Note: You should disable gzip for SSL traffic.
+        # See: https://bugs.debian.org/773332
+        #
+        # Read up on ssl_ciphers to ensure a secure configuration.
+        # See: https://bugs.debian.org/765782
+        #
+        # Self signed certs generated by the ssl-cert package
+        # Don't use them in a production server!
+        #
+        # include snippets/snakeoil.conf;
+
+        root /nginx/ashrafulDev/public;
+
+        # Add index.php to the list if you are using PHP
+        index index.html index.htm index.php;
+
+        server_name dev.instasure.xyz; 
+
+        location / {
+                # First attempt to serve request as file, then
+                # as directory, then fall back to displaying a 404.
+                #try_files $uri $uri/ =404;
+                try_files   $uri $uri/ /index.php?$query_string;
+        }
+
+        # pass PHP scripts to FastCGI server
+        #
+        location ~ \.php$ {
+                include snippets/fastcgi-php.conf;
+
+                # With php-fpm (or other unix sockets):
+                fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+                # With php-cgi (or other tcp sockets):
+#               fastcgi_pass 127.0.0.1:9000;
+        }
+
+          location /phpmyadmin {
+                   root /usr/share/;
+                   index index.php index.html index.htm;
+                   location ~ ^/phpmyadmin/(.+\.php)$ {
+                           try_files $uri =404;
+                           root /usr/share/;
+                           #fastcgi_pass 127.0.0.1:9000;
+                           fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+                           fastcgi_index index.php;
+                           fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                           include /etc/nginx/fastcgi_params;
+                   }
+                   location ~* ^/phpmyadmin/(.+\.(jpg|jpeg|gif|css|png|js|ico|html|xml|txt))$ {
+                           root /usr/share/;
+                   }
+            }
+
+        # deny access to .htaccess files, if Apache's document root
+        # concurs with nginx's one
+        #
+        location ~ /\.ht {
+                deny all;
+        }
+
+#    listen [::]:443 ssl ipv6only=on; # managed by Certbot
+#    listen 443 ssl; # managed by Certbot
+#    ssl_certificate /etc/letsencrypt/live/instasure.xyz/fullchain.pem; # managed by Certbot
+#    ssl_certificate_key /etc/letsencrypt/live/instasure.xyz/privkey.pem; # managed by Certbot
+#    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+#    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+
+
+
+#    listen 443 ssl; # managed by Certbot
+#    ssl_certificate /etc/letsencrypt/live/m.instasure.xyz-0001/fullchain.pem; # managed by Certbot
+#    ssl_certificate_key /etc/letsencrypt/live/m.instasure.xyz-0001/privkey.pem; # managed by Certbot
+#    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+#    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+
+
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/dev.instasure.xyz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/dev.instasure.xyz/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+}
+
+
+# Virtual Host configuration for example.com
+#
+# You can move that to a different file under sites-available/ and symlink that
+# to sites-enabled/ to enable it.
+#
+#server {
+#       listen 80;
+#       listen [::]:80;
+#
+#       server_name example.com;
+#
+#       root /var/www/example.com;
+#       index index.html;
+#
+#       location / {
+#               try_files $uri $uri/ =404;
+#       }
+#}
+
+
+server {
+    if ($host = dev.instasure.xyz) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+
+        server_name dev.instasure.xyz;
+    listen 80;
+    return 404; # managed by Certbot
+
+
+}forge@instasure-dns-vm-05:/etc/nginx/sites-enabled$ 
+
+-------------------------------------------------------------------------
+
+forge@instasure-dns-vm-05:/etc/nginx/sites-enabled$ cat test.instasure.xyz.conf 
+server {
+    listen 443 ssl;
+    server_name test.instasure.xyz;
+
+    root /nginx/test2025/public;
+    index index.html index.htm index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/var/run/php/php7.4-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+
+    # SSL Certificates
+    ssl_certificate /etc/letsencrypt/live/test.instasure.xyz/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/test.instasure.xyz/privkey.pem; # managed by Certbot
+}
+forge@instasure-dns-vm-05:/etc/nginx/sites-enabled$ 
